@@ -62,9 +62,11 @@
                     
                     <div class="mb-8 group">
                         <label for="file-upload" class="border-2 border-dashed border-slate-200 rounded-2xl p-12 block hover:border-indigo-400 transition-colors cursor-pointer bg-slate-50/50">
-                            <input id="file-upload" name="file" type="file" class="hidden" required onchange="updateFileName(this)">
-                            <p id="file-name" class="text-slate-400 group-hover:text-indigo-600 transition">Click to select a file or drag & drop</p>
-                            <p class="text-xs text-slate-300 mt-2 italic">Supports MP4, MP3, PDF, TXT</p>
+                            <input id="file-upload" name="files" type="file" class="hidden" multiple required onchange="updateFileNames(this)">
+                            <div id="file-list" class="space-y-2">
+                                <p class="text-slate-400 group-hover:text-indigo-600 transition">Click to select files or drag & drop</p>
+                                <p class="text-xs text-slate-300 mt-2 italic">Supports MP4, MP3, PDF, TXT, DOCX</p>
+                            </div>
                         </label>
                     </div>
 
@@ -111,13 +113,34 @@
 
     <script>
         function updateFileNames(input) {
-            // ... (previous code)
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            
+            if (input.files.length > 0) {
+                const title = document.createElement('p');
+                title.className = 'text-indigo-600 font-bold mb-2';
+                title.textContent = `${input.files.length} file(s) selected:`;
+                fileList.appendChild(title);
+
+                const list = document.createElement('ul');
+                list.className = 'text-sm text-slate-500 space-y-1';
+                for (let i = 0; i < input.files.length; i++) {
+                    const li = document.createElement('li');
+                    li.textContent = `• ${input.files[i].name}`;
+                    list.appendChild(li);
+                }
+                fileList.appendChild(list);
+            } else {
+                fileList.innerHTML = `
+                    <p class="text-slate-400 group-hover:text-indigo-600 transition">Click to select files or drag & drop</p>
+                    <p class="text-xs text-slate-300 mt-2 italic">Supports MP4, MP3, PDF, TXT, DOCX</p>
+                `;
+            }
         }
 
         const form = document.querySelector('form');
-        form.onsubmit = async (e) => {
+        form.onsubmit = (e) => {
             const btn = document.getElementById('submit-btn');
-            const btnText = document.getElementById('btn-text');
             const loader = document.getElementById('loader');
             const statusArea = document.getElementById('status-area');
             const statusBar = document.getElementById('status-bar');
@@ -132,9 +155,9 @@
 
             const steps = [
                 { p: 10, t: "Uploading...", d: "Sending files to the server..." },
-                { p: 30, t: "Extracting Audio...", d: "Processing video content (this may take a minute)..." },
+                { p: 30, t: "Extracting Audio...", d: "Processing video content..." },
                 { p: 60, t: "Transcribing...", d: "Gemini is converting audio to text..." },
-                { p: 85, t: "Synthesizing Summary...", d: "Creating your unified course analysis..." },
+                { p: 85, t: "Synthesizing Summary...", d: "Creating unified analysis..." },
                 { p: 95, t: "Generating PDF...", d: "Formatting the final document..." }
             ];
 
@@ -150,7 +173,7 @@
                 } else {
                     clearInterval(interval);
                 }
-            }, 3000); // Visual simulation of background tasks
+            }, 3000);
         };
     </script>
 </body>
