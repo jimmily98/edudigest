@@ -27,7 +27,7 @@ def transcribe_audio(audio_file_path):
         sample_file = genai.upload_file(path=audio_file_path)
         
         print(f"Transcribing audio...")
-        model = genai.GenerativeModel(model_name="gemini-1.5-pro")
+        model = genai.GenerativeModel(model_name="gemini-3.1-flash-lite-preview")
         
         # We check for the file state before proceeding
         import time
