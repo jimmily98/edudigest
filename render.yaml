@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: edudigest
+    env: docker
+    plan: free # or starter
+    region: ohio # or your preferred region
+    dockerfilePath: Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # Set manually in Render Dashboard
+      - key: PORT
+        value: 10000
+    disk:
+      name: edudigest-storage
+      mountPath: /app/data
+      sizeGB: 1
