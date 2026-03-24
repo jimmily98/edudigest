@@ -32,23 +32,38 @@ def index():
     <body class="container mt-5">
         <h1>Welcome to EduDigest!</h1>
         <p>Upload your course materials (Video, Audio, Text) for automatic summarization.</p>
+        
         <form action="/upload" method="post" enctype="multipart/form-data" class="mb-4">
             <div class="mb-3">
+                <label for="file" class="form-label">Course Material:</label>
                 <input type="file" name="file" class="form-control" required>
             </div>
+            
+            <div class="mb-3">
+                <label for="action" class="form-label">Desired Action (via NotebookLM):</label>
+                <select name="action" class="form-select">
+                    <option value="gist">Get the Gist (Executive Summary)</option>
+                    <option value="faq">Generate FAQ & Answers</option>
+                    <option value="study_guide">Create Study Guide</option>
+                    <option value="briefing">Briefing Document</option>
+                </select>
+            </div>
+            
             <button type="submit" class="btn btn-primary">Upload and Process</button>
         </form>
     </body>
     </html>
     """
 
-@app.route('/upload', method=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
     
     file = request.files['file']
+    action = request.form.get('action', 'gist')
+    
     if file.filename == '':
         flash('No selected file')
         return redirect(request.url)
@@ -68,7 +83,21 @@ def upload_file():
             pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], filename.replace('.mp4', '.pdf'))
             create_pdf(transcript, pdf_path, title=f"Transcript: {filename}")
             
-            return f"<h1>Processing Complete!</h1><p>Transcript saved to: {pdf_path}</p><p>{transcript}</p>"
+            # NOTE: At this point, the file is ready to be sent to NotebookLM
+            # The client's upload_source method would be called here.
+            
+            return f"""
+            <div class='container mt-5'>
+                <h1>Processing Complete!</h1>
+                <p><strong>Action Selected:</strong> {action.upper()}</p>
+                <p><strong>Transcript saved to:</strong> {pdf_path}</p>
+                <div class='card p-4 mt-3'>
+                    <h5>NotebookLM Analysis (Gist/Summary):</h5>
+                    <p>{transcript}</p>
+                </div>
+                <a href='/' class='btn btn-secondary mt-3'>Back to Upload</a>
+            </div>
+            """
         
         return "File uploaded successfully. Processing for other types coming soon!"
     
