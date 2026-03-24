@@ -93,10 +93,30 @@
     </div>
 
     <script>
-        function updateFileName(input) {
-            const fileName = input.files[0] ? input.files[0].name : "Click to select a file or drag & drop";
-            document.getElementById('file-name').textContent = fileName;
-            document.getElementById('file-name').classList.add('text-indigo-600', 'font-semibold');
+        function updateFileNames(input) {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            
+            if (input.files.length > 0) {
+                const title = document.createElement('p');
+                title.className = 'text-indigo-600 font-bold mb-2';
+                title.textContent = `${input.files.length} file(s) selected:`;
+                fileList.appendChild(title);
+
+                const list = document.createElement('ul');
+                list.className = 'text-sm text-slate-500 space-y-1';
+                for (let i = 0; i < input.files.length; i++) {
+                    const li = document.createElement('li');
+                    li.textContent = `• ${input.files[i].name}`;
+                    list.appendChild(li);
+                }
+                fileList.appendChild(list);
+            } else {
+                fileList.innerHTML = `
+                    <p class="text-slate-400 group-hover:text-indigo-600 transition">Click to select files or drag & drop</p>
+                    <p class="text-xs text-slate-300 mt-2 italic">Select multiple: MP4, MP3, PDF, TXT, DOCX</p>
+                `;
+            }
         }
     </script>
 </body>
