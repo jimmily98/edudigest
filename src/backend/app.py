@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from src.utils.audio_extractor import extract_audio
 from src.utils.transcriber import transcribe_audio
+from src.utils.pdf_generator import create_pdf
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -62,7 +63,12 @@ def upload_file():
             audio_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], filename.replace('.mp4', '.mp3'))
             extract_audio(upload_path, audio_path)
             transcript = transcribe_audio(audio_path)
-            return f"<h1>Processing Complete!</h1><p>{transcript}</p>"
+            
+            # Save PDF version
+            pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], filename.replace('.mp4', '.pdf'))
+            create_pdf(transcript, pdf_path, title=f"Transcript: {filename}")
+            
+            return f"<h1>Processing Complete!</h1><p>Transcript saved to: {pdf_path}</p><p>{transcript}</p>"
         
         return "File uploaded successfully. Processing for other types coming soon!"
     

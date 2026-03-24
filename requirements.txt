@@ -3,3 +3,4 @@ flask
 werkzeug
 ffmpeg-python
 python-dotenv
+fpdf2
