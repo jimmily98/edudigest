@@ -76,7 +76,7 @@ def upload_file():
     # Combined analysis using Gemini
     all_content = "\n\n".join(processed_contents)
     import google.generativeai as genai
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    model = genai.GenerativeModel("gemini-2.5-flash")
     
     prompt = f"""
     The following is a collection of materials for the course "{notebook_name}". 
