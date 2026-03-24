@@ -15,7 +15,7 @@ app.secret_key = "supersecretkey_edudigest_2026"
 
 UPLOAD_FOLDER = 'data/uploads'
 TRANSCRIPT_FOLDER = 'data/transcripts'
-ALLOWED_EXTENSIONS = {'mp4', 'mp3', 'pdf', 'txt', 'docx', 'csv'}
+ALLOWED_EXTENSIONS = {'mp4', 'mp3', 'pdf', 'txt', 'docx', 'csv', 'html'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['TRANSCRIPT_FOLDER'] = TRANSCRIPT_FOLDER
@@ -78,35 +78,45 @@ def upload_file():
     # Combined analysis using Gemini
     all_content = "\n\n".join(processed_contents)
     import google.generativeai as genai
+    api_key = os.getenv('GEMINI_API_KEY')
+    if api_key:
+        genai.configure(api_key=api_key)
+        
     model = genai.GenerativeModel("gemini-3-flash-preview")
     
     lang_instruction = f"Please output the response in {language} language." if language != 'default' else "Please output the response in the same language as the first source file provided."
+
+    format_instruction = ""
+    if action == 'mindmap':
+        format_instruction = "IMPORTANT: Provide the mindmap in Mermaid.js syntax inside a ```mermaid code block. Focus on high-level relationships."
+    elif action == 'quiz':
+        format_instruction = "IMPORTANT: Provide a multiple-choice quiz with answers at the end."
+    elif action == 'flashcards':
+        format_instruction = "IMPORTANT: Provide information in Front/Back flashcard style."
 
     prompt = f"""
     The following is a collection of materials for the course "{notebook_name}". 
     The user wants to: {action.upper()}.
     
     {lang_instruction}
+    {format_instruction}
 
     Please analyze ALL the sources provided below collectively. 
     Synthesize the information into a unified response. 
-    If there are conflicting points between sources, please note them.
     
     MATERIALS:
-    {all_content[:60000]} # Limit for Flash model token safety
+    {all_content[:60000]}
     """
     
     response = model.generate_content(prompt)
     analysis_text = response.text
     
     # Save unified PDF
-    # Sanitize notebook name for filename
     safe_nb_name = "".join([c for c in notebook_name if c.isalnum() or c in (' ', '_')]).strip().replace(' ', '_')
     pdf_filename = f"{safe_nb_name}_unified_summary.pdf"
     pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], pdf_filename)
     create_pdf(analysis_text, pdf_path, title=f"Unified Analysis: {notebook_name}")
 
-    # Step: Handle Specific Exports (like PPT)
     extra_download_url = None
     if action == 'ppt':
         ppt_filename = f"{safe_nb_name}_presentation.pptx"
@@ -124,30 +134,53 @@ def upload_file():
 
 @app.route('/download/<path:filename>')
 def download_file(filename):
-    # Use absolute path to avoid ambiguity
     abs_path = os.path.abspath(app.config['TRANSCRIPT_FOLDER'])
     return send_from_directory(abs_path, filename, as_attachment=True)
 
+@app.route('/delete/<path:filename>')
+def delete_notebook(filename):
+    try:
+        path = os.path.join(app.config['TRANSCRIPT_FOLDER'], filename)
+        if os.path.exists(path):
+            os.remove(path)
+            flash(f"Deleted {filename}")
+        else:
+            flash(f"File not found: {filename}")
+    except Exception as e:
+        flash(f"Error deleting file: {e}")
+    return redirect(url_for('my_notebooks'))
+
 @app.route('/notebooks')
 def my_notebooks():
-    # List all PDFs in transcript folder
     notebooks = []
     if os.path.exists(app.config['TRANSCRIPT_FOLDER']):
-        for file in os.listdir(app.config['TRANSCRIPT_FOLDER']):
-            if file.endswith('.pdf'):
+        files = sorted(os.listdir(app.config['TRANSCRIPT_FOLDER']), key=lambda x: os.path.getmtime(os.path.join(app.config['TRANSCRIPT_FOLDER'], x)), reverse=True)
+        for file in files:
+            if file.endswith('.pdf') or file.endswith('.pptx'):
                 notebooks.append({
-                    'name': file.replace('_unified_summary.pdf', '').replace('_', ' '),
+                    'name': file.split('_unified_summary')[0].split('_presentation')[0].replace('_', ' '),
                     'filename': file,
-                    'path': url_for('download_file', filename=file)
+                    'path': url_for('download_file', filename=file),
+                    'type': 'PDF' if file.endswith('.pdf') else 'PPT'
                 })
     return render_template('notebooks.html', notebooks=notebooks)
 
-@app.route('/settings')
+@app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    # Simple settings page
+    if request.method == 'POST':
+        new_key = request.form.get('gemini_key')
+        if new_key:
+            env_path = '/home/admin/edudigest/.env'
+            with open(env_path, 'w') as f:
+                f.write(f"GEMINI_API_KEY={new_key}\n")
+            flash("Settings updated. Service will need to be restarted to apply.")
+            
     env_vars = {
         'API_KEY_CONFIGURED': os.getenv('GEMINI_API_KEY') is not None,
-        'MODEL': "gemini-2.5-flash",
+        'MODEL': "gemini-3-flash-preview",
         'WORKSPACE': os.getcwd()
     }
     return render_template('settings.html', settings=env_vars)
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
