@@ -40,6 +40,7 @@ def upload_file():
     files = request.files.getlist('files')
     notebook_name = request.form.get('notebook_name', 'Untitled Course')
     action = request.form.get('action', 'gist')
+    language = request.form.get('language', 'default')
     
     if not files or all(f.filename == '' for f in files):
         flash('No selected files')
@@ -78,10 +79,14 @@ def upload_file():
     import google.generativeai as genai
     model = genai.GenerativeModel("gemini-2.5-flash")
     
+    lang_instruction = f"Please output the response in {language} language." if language != 'default' else "Please output the response in the same language as the first source file provided."
+
     prompt = f"""
     The following is a collection of materials for the course "{notebook_name}". 
     The user wants to: {action.upper()}.
     
+    {lang_instruction}
+
     Please analyze ALL the sources provided below collectively. 
     Synthesize the information into a unified response. 
     If there are conflicting points between sources, please note them.
@@ -94,7 +99,9 @@ def upload_file():
     analysis_text = response.text
     
     # Save unified PDF
-    pdf_filename = f"{secure_filename(notebook_name)}_unified_summary.pdf"
+    # Sanitize notebook name for filename
+    safe_nb_name = "".join([c for c in notebook_name if c.isalnum() or c in (' ', '_')]).strip().replace(' ', '_')
+    pdf_filename = f"{safe_nb_name}_unified_summary.pdf"
     pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], pdf_filename)
     create_pdf(analysis_text, pdf_path, title=f"Unified Analysis: {notebook_name}")
 
@@ -104,13 +111,33 @@ def upload_file():
                            action=action.capitalize(), 
                            analysis=analysis_text,
                            pdf_url=url_for('download_file', filename=pdf_filename))
-    
-    flash("Invalid file type.")
-    return redirect(request.url)
 
-@app.route('/download/<filename>')
+@app.route('/download/<path:filename>')
 def download_file(filename):
-    return send_from_directory(app.config['TRANSCRIPT_FOLDER'], filename)
+    # Use absolute path to avoid ambiguity
+    abs_path = os.path.abspath(app.config['TRANSCRIPT_FOLDER'])
+    return send_from_directory(abs_path, filename, as_attachment=True)
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+@app.route('/notebooks')
+def my_notebooks():
+    # List all PDFs in transcript folder
+    notebooks = []
+    if os.path.exists(app.config['TRANSCRIPT_FOLDER']):
+        for file in os.listdir(app.config['TRANSCRIPT_FOLDER']):
+            if file.endswith('.pdf'):
+                notebooks.append({
+                    'name': file.replace('_unified_summary.pdf', '').replace('_', ' '),
+                    'filename': file,
+                    'path': url_for('download_file', filename=file)
+                })
+    return render_template('notebooks.html', notebooks=notebooks)
+
+@app.route('/settings')
+def settings():
+    # Simple settings page
+    env_vars = {
+        'API_KEY_CONFIGURED': os.getenv('GEMINI_API_KEY') is not None,
+        'MODEL': "gemini-2.5-flash",
+        'WORKSPACE': os.getcwd()
+    }
+    return render_template('settings.html', settings=env_vars)

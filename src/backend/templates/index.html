@@ -19,10 +19,10 @@
                 <a href="/" class="flex items-center gap-3 p-3 bg-indigo-800 rounded-lg text-white">
                     <i class="fa-solid fa-house"></i> Dashboard
                 </a>
-                <a href="#" class="flex items-center gap-3 p-3 text-indigo-200 hover:bg-indigo-800 rounded-lg transition">
+                <a href="/notebooks" class="flex items-center gap-3 p-3 text-indigo-200 hover:bg-indigo-800 rounded-lg transition">
                     <i class="fa-solid fa-folder"></i> My Notebooks
                 </a>
-                <a href="#" class="flex items-center gap-3 p-3 text-indigo-200 hover:bg-indigo-800 rounded-lg transition">
+                <a href="/settings" class="flex items-center gap-3 p-3 text-indigo-200 hover:bg-indigo-800 rounded-lg transition">
                     <i class="fa-solid fa-gear"></i> Settings
                 </a>
             </nav>
@@ -82,8 +82,25 @@
                                 <option value="faq">Generate FAQ</option>
                                 <option value="study_guide">Create Study Guide</option>
                                 <option value="briefing">Briefing Document</option>
+                                <option value="deep_dive">Deep Dive Analysis</option>
+                                <option value="audio_script">Podcast/Audio Script</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4 text-left mb-8">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">Output Language</label>
+                        <select name="language" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none bg-white">
+                            <option value="default">Default (Matches first uploaded file)</option>
+                            <option value="English">English</option>
+                            <option value="Chinese">Chinese (Simplified)</option>
+                            <option value="Chinese Traditional">Chinese (Traditional)</option>
+                            <option value="Spanish">Spanish</option>
+                            <option value="French">French</option>
+                            <option value="German">German</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Korean">Korean</option>
+                        </select>
                     </div>
 
                     <button id="submit-btn" type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-3">

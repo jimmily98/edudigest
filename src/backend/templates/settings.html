@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduDigest - Settings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-indigo-900 text-white p-6 hidden md:block">
+            <div class="flex items-center gap-3 mb-10">
+                <div class="bg-indigo-50 p-2 rounded-lg text-2xl">📖</div>
+                <h1 class="text-xl font-bold tracking-tight">EduDigest</h1>
+            </div>
+            <nav class="space-y-4">
+                <a href="/" class="flex items-center gap-3 p-3 text-indigo-200 hover:bg-indigo-800 rounded-lg transition">
+                    <i class="fa-solid fa-house"></i> Dashboard
+                </a>
+                <a href="/notebooks" class="flex items-center gap-3 p-3 text-indigo-200 hover:bg-indigo-800 rounded-lg transition">
+                    <i class="fa-solid fa-folder"></i> My Notebooks
+                </a>
+                <a href="/settings" class="flex items-center gap-3 p-3 bg-indigo-800 rounded-lg text-white">
+                    <i class="fa-solid fa-gear"></i> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-8">
+            <header class="mb-10">
+                <h2 class="text-3xl font-bold text-indigo-900">System Settings</h2>
+            </header>
+
+            <section class="max-w-4xl space-y-6">
+                <!-- API Status -->
+                <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-key text-indigo-500"></i> API Configuration
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                            <div>
+                                <p class="font-bold text-slate-700">Gemini API Key</p>
+                                <p class="text-sm text-slate-500">Managed via server environment variables</p>
+                            </div>
+                            {% if settings.API_KEY_CONFIGURED %}
+                            <span class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold">CONFIGURED</span>
+                            {% else %}
+                            <span class="bg-rose-100 text-rose-700 px-3 py-1 rounded-full text-xs font-bold">MISSING</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                            <div>
+                                <p class="font-bold text-slate-700">AI Model</p>
+                                <p class="text-sm text-slate-500">Currently active model for analysis</p>
+                            </div>
+                            <code class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg text-xs font-bold">{{ settings.MODEL }}</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- App Info -->
+                <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-indigo-500"></i> Application Info
+                    </h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 rounded-2xl">
+                            <p class="text-xs text-slate-400 font-bold uppercase mb-1">Version</p>
+                            <p class="font-bold text-slate-700">v1.0.2 Stable</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-2xl">
+                            <p class="text-xs text-slate-400 font-bold uppercase mb-1">Environment</p>
+                            <p class="font-bold text-slate-700">Production (Alibaba Cloud)</p>
+                        </div>
+                        <div class="col-span-2 p-4 bg-slate-50 rounded-2xl">
+                            <p class="text-xs text-slate-400 font-bold uppercase mb-1">Workspace Path</p>
+                            <code class="text-xs text-slate-500">{{ settings.WORKSPACE }}</code>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
