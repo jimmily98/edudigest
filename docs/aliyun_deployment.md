@@ -10,21 +10,24 @@ Ensure your Security Group allows inbound traffic on:
 
 ## 2. Install System Dependencies
 
-Alibaba Cloud Linux 3 uses `yum` or `dnf` (compatible with RHEL/CentOS).
+Alibaba Cloud Linux 3 uses `yum` or `dnf`. **Important: `google-generativeai` requires Python 3.9 or higher.**
 
 ```bash
-# Update and install Python, Git, and development tools
+# Update system
 sudo yum update -y
-sudo yum install -y python3 python3-pip git gcc python3-devel
 
-# Install FFmpeg (using the official static build for reliability)
+# Install Python 3.11 (highly recommended for compatibility)
+sudo yum install -y python3.11 python3.11-pip python3.11-devel git gcc
+
+# Install FFmpeg (using the official static build)
 wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
 tar xvf ffmpeg-release-amd64-static.tar.xz
 sudo mv ffmpeg-*-amd64-static/ffmpeg /usr/local/bin/
 sudo mv ffmpeg-*-amd64-static/ffprobe /usr/local/bin/
 rm -rf ffmpeg-*-amd64-static*
 
-# Verify FFmpeg
+# Verify installations
+python3.11 --version
 ffmpeg -version
 
 # Clone the repository
@@ -35,11 +38,11 @@ cd edudigest
 ## 3. Set Up the Application
 
 ```bash
-# Create a virtual environment
-python3 -m venv venv
+# Create a virtual environment using Python 3.11
+python3.11 -m venv venv
 source venv/bin/activate
 
-# Install dependencies
+# Upgrade pip and install dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 
