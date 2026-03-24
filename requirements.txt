@@ -7,3 +7,6 @@ fpdf2
 google-auth
 requests
 gunicorn
+PyPDF2
+python-docx
+beautifulsoup4

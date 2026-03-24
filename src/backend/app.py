@@ -7,6 +7,7 @@ from src.utils.audio_extractor import extract_audio
 from src.utils.transcriber import transcribe_audio
 from src.utils.pdf_generator import create_pdf
 from src.utils.notebooklm_client import NotebookLMClient
+from src.utils.text_processor import read_text_file
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey_edudigest_2026"
@@ -72,10 +73,19 @@ def upload_file():
             pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], pdf_filename)
             create_pdf(analysis_text, pdf_path, title=f"Analysis: {notebook_name}")
             
-        else:
-            # For other text formats, handle appropriately (Coming soon)
-            analysis_text = "File uploaded successfully. Intelligent text analysis for documents is coming in the next update!"
-            pdf_filename = filename + ".pdf" # Placeholder
+        elif filename.rsplit('.', 1)[1].lower() in {'pdf', 'docx', 'txt', 'csv', 'html'}:
+            # Direct text processing
+            raw_text = read_text_file(upload_path)
+            
+            # Use Gemini to analyze the text directly (no transcription needed)
+            import google.generativeai as genai
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            response = model.generate_content(f"Analyze the following text according to the action: {action}. Text: {raw_text[:30000]}") # Truncate if too long for simple flash call
+            analysis_text = response.text
+            
+            pdf_filename = filename + ".pdf"
+            pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], pdf_filename)
+            create_pdf(analysis_text, pdf_path, title=f"Analysis: {notebook_name}")
 
         return render_template('result.html', 
                                notebook_name=notebook_name, 
