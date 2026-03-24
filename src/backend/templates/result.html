@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduDigest - Analysis Result</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 font-sans text-slate-900">
+    <div class="flex min-h-screen flex-col items-center p-8">
+        <header class="w-full max-w-4xl flex justify-between items-center mb-10">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white">📖</div>
+                <h1 class="text-2xl font-bold tracking-tight text-indigo-900">EduDigest</h1>
+            </div>
+            <a href="/" class="text-slate-500 hover:text-indigo-600 font-semibold transition">
+                <i class="fa-solid fa-arrow-left mr-2"></i> New Analysis
+            </a>
+        </header>
+
+        <main class="w-full max-w-4xl bg-white rounded-3xl p-10 border border-slate-100 shadow-sm">
+            <div class="mb-10 flex flex-wrap justify-between items-center gap-4">
+                <div>
+                    <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">COMPLETED</span>
+                    <h2 class="text-3xl font-extrabold mt-3 text-slate-800">{{ notebook_name }}</h2>
+                    <p class="text-slate-500 mt-1">Processed from: <span class="font-mono text-sm bg-slate-100 px-2 py-0.5 rounded">{{ filename }}</span></p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{{ pdf_url }}" class="bg-indigo-50 text-indigo-600 px-5 py-2.5 rounded-xl font-semibold hover:bg-indigo-100 transition">
+                        <i class="fa-solid fa-file-pdf mr-2"></i> Download PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="prose prose-slate max-w-none">
+                <div class="bg-slate-50 rounded-2xl p-8 border border-slate-100 whitespace-pre-wrap leading-relaxed text-slate-700">
+                    <h3 class="text-indigo-900 font-bold text-xl mb-4 flex items-center gap-3">
+                        <i class="fa-solid fa-sparkles text-amber-500"></i>
+                        Analysis: {{ action }}
+                    </h3>
+                    {{ analysis }}
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-12 text-slate-400 text-sm">
+            &copy; 2026 EduDigest - Powered by AI & NotebookLM
+        </footer>
+    </div>
+</body>
+</html>

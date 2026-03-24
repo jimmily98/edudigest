@@ -1,19 +1,26 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from werkzeug.utils import secure_filename
+
+# Import our utilities
 from src.utils.audio_extractor import extract_audio
 from src.utils.transcriber import transcribe_audio
 from src.utils.pdf_generator import create_pdf
+from src.utils.notebooklm_client import NotebookLMClient
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+app.secret_key = "supersecretkey_edudigest_2026"
 
 UPLOAD_FOLDER = 'data/uploads'
 TRANSCRIPT_FOLDER = 'data/transcripts'
-ALLOWED_EXTENSIONS = {'mp4', 'mp3', 'pdf', 'txt', 'doc', 'docx', 'csv'}
+ALLOWED_EXTENSIONS = {'mp4', 'mp3', 'pdf', 'txt', 'docx', 'csv'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['TRANSCRIPT_FOLDER'] = TRANSCRIPT_FOLDER
+
+# Ensure directories exist
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(TRANSCRIPT_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -21,39 +28,7 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    return """
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>EduDigest - Course Summarizer</title>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    </head>
-    <body class="container mt-5">
-        <h1>Welcome to EduDigest!</h1>
-        <p>Upload your course materials (Video, Audio, Text) for automatic summarization.</p>
-        
-        <form action="/upload" method="post" enctype="multipart/form-data" class="mb-4">
-            <div class="mb-3">
-                <label for="file" class="form-label">Course Material:</label>
-                <input type="file" name="file" class="form-control" required>
-            </div>
-            
-            <div class="mb-3">
-                <label for="action" class="form-label">Desired Action (via NotebookLM):</label>
-                <select name="action" class="form-select">
-                    <option value="gist">Get the Gist (Executive Summary)</option>
-                    <option value="faq">Generate FAQ & Answers</option>
-                    <option value="study_guide">Create Study Guide</option>
-                    <option value="briefing">Briefing Document</option>
-                </select>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Upload and Process</button>
-        </form>
-    </body>
-    </html>
-    """
+    return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -62,6 +37,7 @@ def upload_file():
         return redirect(request.url)
     
     file = request.files['file']
+    notebook_name = request.form.get('notebook_name', 'Untitled Course')
     action = request.form.get('action', 'gist')
     
     if file.filename == '':
@@ -73,37 +49,47 @@ def upload_file():
         upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(upload_path)
         
+        analysis_text = ""
+        pdf_filename = ""
+        
         # Determine file type and process
         if filename.endswith('.mp4'):
+            # 1. Extract audio
             audio_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], filename.replace('.mp4', '.mp3'))
             extract_audio(upload_path, audio_path)
-            transcript = transcribe_audio(audio_path)
             
-            # Save PDF version
-            pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], filename.replace('.mp4', '.pdf'))
-            create_pdf(transcript, pdf_path, title=f"Transcript: {filename}")
+            # 2. Transcribe & Summarize via Gemini
+            analysis_text = transcribe_audio(audio_path)
             
-            # NOTE: At this point, the file is ready to be sent to NotebookLM
-            # The client's upload_source method would be called here.
+            # 3. Save PDF version
+            pdf_filename = filename.replace('.mp4', '.pdf')
+            pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], pdf_filename)
+            create_pdf(analysis_text, pdf_path, title=f"Analysis: {notebook_name}")
             
-            return f"""
-            <div class='container mt-5'>
-                <h1>Processing Complete!</h1>
-                <p><strong>Action Selected:</strong> {action.upper()}</p>
-                <p><strong>Transcript saved to:</strong> {pdf_path}</p>
-                <div class='card p-4 mt-3'>
-                    <h5>NotebookLM Analysis (Gist/Summary):</h5>
-                    <p>{transcript}</p>
-                </div>
-                <a href='/' class='btn btn-secondary mt-3'>Back to Upload</a>
-            </div>
-            """
-        
-        return "File uploaded successfully. Processing for other types coming soon!"
+        elif filename.endswith('.mp3'):
+            analysis_text = transcribe_audio(upload_path)
+            pdf_filename = filename.replace('.mp3', '.pdf')
+            pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], pdf_filename)
+            create_pdf(analysis_text, pdf_path, title=f"Analysis: {notebook_name}")
+            
+        else:
+            # For other text formats, handle appropriately (Coming soon)
+            analysis_text = "File uploaded successfully. Intelligent text analysis for documents is coming in the next update!"
+            pdf_filename = filename + ".pdf" # Placeholder
+
+        return render_template('result.html', 
+                               notebook_name=notebook_name, 
+                               filename=filename, 
+                               action=action.capitalize(), 
+                               analysis=analysis_text,
+                               pdf_url=url_for('download_file', filename=pdf_filename))
     
-    return "Invalid file type."
+    flash("Invalid file type.")
+    return redirect(request.url)
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    return send_from_directory(app.config['TRANSCRIPT_FOLDER'], filename)
 
 if __name__ == '__main__':
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    os.makedirs(TRANSCRIPT_FOLDER, exist_ok=True)
     app.run(debug=True, port=5000)
