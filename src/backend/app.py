@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from src.utils.audio_extractor import extract_audio
 from src.utils.transcriber import transcribe_audio
 from src.utils.pdf_generator import create_pdf
+from src.utils.ppt_generator import create_ppt
 from src.utils.notebooklm_client import NotebookLMClient
 from src.utils.text_processor import read_text_file
 
@@ -77,7 +78,7 @@ def upload_file():
     # Combined analysis using Gemini
     all_content = "\n\n".join(processed_contents)
     import google.generativeai as genai
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model = genai.GenerativeModel("gemini-3-flash-preview")
     
     lang_instruction = f"Please output the response in {language} language." if language != 'default' else "Please output the response in the same language as the first source file provided."
 
@@ -105,12 +106,21 @@ def upload_file():
     pdf_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], pdf_filename)
     create_pdf(analysis_text, pdf_path, title=f"Unified Analysis: {notebook_name}")
 
+    # Step: Handle Specific Exports (like PPT)
+    extra_download_url = None
+    if action == 'ppt':
+        ppt_filename = f"{safe_nb_name}_presentation.pptx"
+        ppt_path = os.path.join(app.config['TRANSCRIPT_FOLDER'], ppt_filename)
+        if create_ppt(analysis_text, ppt_path, title=notebook_name):
+            extra_download_url = url_for('download_file', filename=ppt_filename)
+
     return render_template('result.html', 
                            notebook_name=notebook_name, 
                            filename=", ".join(file_metadata), 
                            action=action.capitalize(), 
                            analysis=analysis_text,
-                           pdf_url=url_for('download_file', filename=pdf_filename))
+                           pdf_url=url_for('download_file', filename=pdf_filename),
+                           extra_url=extra_download_url)
 
 @app.route('/download/<path:filename>')
 def download_file(filename):

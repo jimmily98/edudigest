@@ -47,6 +47,11 @@
                         <p class="text-slate-500 mt-1">Sources processed: <span class="font-mono text-xs bg-slate-100 px-2 py-0.5 rounded">{{ filename }}</span></p>
                     </div>
                     <div class="flex gap-3">
+                        {% if extra_url %}
+                        <a href="{{ extra_url }}" class="bg-amber-50 text-amber-700 px-5 py-2.5 rounded-xl font-bold shadow-sm hover:bg-amber-100 transition">
+                            <i class="fa-solid fa-file-powerpoint mr-2"></i> Download PPT
+                        </a>
+                        {% endif %}
                         <a href="{{ pdf_url }}" class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition">
                             <i class="fa-solid fa-file-pdf mr-2"></i> Download Full PDF
                         </a>

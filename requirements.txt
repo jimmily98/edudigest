@@ -10,3 +10,5 @@ gunicorn
 PyPDF2
 python-docx
 beautifulsoup4
+python-pptx
+markdown
