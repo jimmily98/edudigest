@@ -84,9 +84,26 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition transform hover:-translate-y-0.5">
-                        Start Intelligent Analysis
+                    <button id="submit-btn" type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-3">
+                        <span id="btn-text">Start Intelligent Analysis</span>
+                        <div id="loader" class="hidden">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        </div>
                     </button>
+                    
+                    <!-- Progress Status Area -->
+                    <div id="status-area" class="mt-6 hidden">
+                        <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 text-left">
+                            <div class="flex justify-between items-center mb-2">
+                                <p id="status-text" class="text-sm font-semibold text-indigo-600">Initializing Analysis...</p>
+                                <p id="status-percent" class="text-xs font-bold text-slate-400">0%</p>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                <div id="status-bar" class="bg-indigo-500 h-full w-0 transition-all duration-500"></div>
+                            </div>
+                            <p id="status-detail" class="text-xs text-slate-400 mt-2 italic">Preparing your materials for the AI...</p>
+                        </div>
+                    </div>
                 </form>
             </section>
         </main>
@@ -94,30 +111,47 @@
 
     <script>
         function updateFileNames(input) {
-            const fileList = document.getElementById('file-list');
-            fileList.innerHTML = '';
-            
-            if (input.files.length > 0) {
-                const title = document.createElement('p');
-                title.className = 'text-indigo-600 font-bold mb-2';
-                title.textContent = `${input.files.length} file(s) selected:`;
-                fileList.appendChild(title);
-
-                const list = document.createElement('ul');
-                list.className = 'text-sm text-slate-500 space-y-1';
-                for (let i = 0; i < input.files.length; i++) {
-                    const li = document.createElement('li');
-                    li.textContent = `• ${input.files[i].name}`;
-                    list.appendChild(li);
-                }
-                fileList.appendChild(list);
-            } else {
-                fileList.innerHTML = `
-                    <p class="text-slate-400 group-hover:text-indigo-600 transition">Click to select files or drag & drop</p>
-                    <p class="text-xs text-slate-300 mt-2 italic">Select multiple: MP4, MP3, PDF, TXT, DOCX</p>
-                `;
-            }
+            // ... (previous code)
         }
+
+        const form = document.querySelector('form');
+        form.onsubmit = async (e) => {
+            const btn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const loader = document.getElementById('loader');
+            const statusArea = document.getElementById('status-area');
+            const statusBar = document.getElementById('status-bar');
+            const statusText = document.getElementById('status-text');
+            const statusDetail = document.getElementById('status-detail');
+            const statusPercent = document.getElementById('status-percent');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+            loader.classList.remove('hidden');
+            statusArea.classList.remove('hidden');
+
+            const steps = [
+                { p: 10, t: "Uploading...", d: "Sending files to the server..." },
+                { p: 30, t: "Extracting Audio...", d: "Processing video content (this may take a minute)..." },
+                { p: 60, t: "Transcribing...", d: "Gemini is converting audio to text..." },
+                { p: 85, t: "Synthesizing Summary...", d: "Creating your unified course analysis..." },
+                { p: 95, t: "Generating PDF...", d: "Formatting the final document..." }
+            ];
+
+            let currentStep = 0;
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    const step = steps[currentStep];
+                    statusBar.style.width = `${step.p}%`;
+                    statusText.textContent = step.t;
+                    statusDetail.textContent = step.d;
+                    statusPercent.textContent = `${step.p}%`;
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 3000); // Visual simulation of background tasks
+        };
     </script>
 </body>
 </html>
